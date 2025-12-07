@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Your Knowledge!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top bar: theme + login -->
+    <div class="top-bar">
+        <button id="theme-toggle" class="top-btn">🌙 Dark Mode</button>
+        <button id="login-toggle" class="top-btn">👤 Login</button>
+    </div>
+
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen active">
+        <div class="hero-background"></div>
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+        
+        <div class="container">
+            <div class="hero-content">
+                <div class="logo-container">
+                    <div class="logo-icon">🧠</div>
+                    <h1 class="logo-text">BrainQuest</h1>
+                </div>
+
+                <!-- Welcome message (filled by JS if user is "logged in") -->
+                <p id="welcome-message" class="hero-welcome hidden"></p>
+                
+                <h2 class="hero-title">Test Your Knowledge!</h2>
+                <p class="hero-subtitle">
+                    Challenge yourself with 10 exciting questions across various topics.
+                    Beat your previous best score and climb the leaderboard (coming soon)!
+                </p>
+                
+                <div class="feature-cards">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Quick & Fun</h3>
+                        <p>10 random questions in minutes.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Timer Challenge</h3>
+                        <p>Race against the clock each question.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌗</div>
+                        <h3>Dark Mode</h3>
+                        <p>Play comfortably day or night.</p>
+                    </div>
+                </div>
+                
+                <button id="start-btn" class="btn btn-primary pulse">
+                    Start Quiz Now
+                    <span class="btn-arrow">→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" class="screen">
+        <div class="quiz-background"></div>
+        
+        <div class="container">
+            <div class="quiz-header">
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Question <span id="current-question">1</span> of 10</span>
+
+                        <div class="quiz-header-right">
+                            <span id="score-display">Score: <strong>0</strong></span>
+                            <span class="timer-badge">
+                                ⏱ <span id="timer-value">20</span>s
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quiz-content">
+                <div class="question-card">
+                    <div class="question-number">Question <span id="question-num">1</span></div>
+                    <h2 id="question-text" class="question-text">Loading question...</h2>
+                    
+                    <div id="answers-container" class="answers-container">
+                        <!-- Answer buttons inserted by JS -->
+                    </div>
+                    
+                    <div id="feedback" class="feedback hidden">
+                        <div class="feedback-content">
+                            <span class="feedback-icon"></span>
+                            <span class="feedback-text"></span>
+                        </div>
+                    </div>
+                    
+                    <button id="next-btn" class="btn btn-secondary hidden">
+                        Next Question
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="screen">
+        <div class="results-background"></div>
+        
+        <div class="container">
+            <div class="results-content">
+                <div class="results-header">
+                    <div class="trophy-icon">🏆</div>
+                    <h1 class="results-title">Quiz Complete!</h1>
+                    <p class="results-subtitle">Here's how you performed</p>
+                </div>
+                
+                <div class="score-card">
+                    <div class="final-score">
+                        <div class="score-circle">
+                            <span id="final-score" class="score-number">0</span>
+                            <span class="score-total">/ 10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="score-stats">
+                        <div class="stat">
+                            <div class="stat-icon correct">✓</div>
+                            <div class="stat-info">
+                                <span class="stat-label">Correct</span>
+                                <span id="correct-count" class="stat-value">0</span>
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-icon incorrect">✗</div>
+                            <div class="stat-info">
+                                <span class="stat-label">Incorrect</span>
+                                <span id="incorrect-count" class="stat-value">0</span>
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-icon percentage">%</div>
+                            <div class="stat-info">
+                                <span class="stat-label">Accuracy</span>
+                                <span id="accuracy" class="stat-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="performance-message" class="performance-message"></div>
+                </div>
+                
+                <div class="review-section">
+                    <h3 class="review-title">Question Review</h3>
+                    <div id="review-container" class="review-container">
+                        <!-- Question reviews inserted by JS -->
+                    </div>
+                </div>
+                
+                <button id="restart-btn" class="btn btn-primary">
+                    Take Quiz Again
+                    <span class="btn-arrow">🔄</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal (front-end only) -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card">
+            <button id="close-login" class="modal-close">&times;</button>
+            <h2 class="modal-title">Welcome to BrainQuest</h2>
+            <p class="modal-text">
+                Enter a display name so we can personalize your quiz
+                and track your best score on this device.
+            </p>
+            <form id="login-form" class="modal-form">
+                <label for="username-input">Display name</label>
+                <input id="username-input" type="text" required placeholder="e.g., Philippe" />
+                
+                <button type="submit" class="btn btn-primary modal-submit">
+                    Save &amp; Continue
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
