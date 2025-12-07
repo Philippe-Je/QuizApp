@@ -9,10 +9,12 @@
 <body>
     <!-- Top bar: theme + login -->
     <div class="top-bar">
+        <button id="home-toggle" class="top-btn">🏠 Home</button>
         <button id="theme-toggle" class="top-btn">🌙 Dark Mode</button>
+        <button id="scores-toggle" class="top-btn">🏅 Scores</button>
         <button id="login-toggle" class="top-btn">👤 Login</button>
     </div>
-
+    
     <!-- Home Screen -->
     <div id="home-screen" class="screen active">
         <div class="hero-background"></div>
@@ -113,66 +115,153 @@
     </div>
 
     <!-- Results Screen -->
-    <div id="results-screen" class="screen">
-        <div class="results-background"></div>
-        
-        <div class="container">
-            <div class="results-content">
-                <div class="results-header">
-                    <div class="trophy-icon">🏆</div>
-                    <h1 class="results-title">Quiz Complete!</h1>
-                    <p class="results-subtitle">Here's how you performed</p>
-                </div>
-                
-                <div class="score-card">
-                    <div class="final-score">
-                        <div class="score-circle">
-                            <span id="final-score" class="score-number">0</span>
-                            <span class="score-total">/ 10</span>
-                        </div>
-                    </div>
-                    
-                    <div class="score-stats">
-                        <div class="stat">
-                            <div class="stat-icon correct">✓</div>
-                            <div class="stat-info">
-                                <span class="stat-label">Correct</span>
-                                <span id="correct-count" class="stat-value">0</span>
-                            </div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-icon incorrect">✗</div>
-                            <div class="stat-info">
-                                <span class="stat-label">Incorrect</span>
-                                <span id="incorrect-count" class="stat-value">0</span>
-                            </div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-icon percentage">%</div>
-                            <div class="stat-info">
-                                <span class="stat-label">Accuracy</span>
-                                <span id="accuracy" class="stat-value">0%</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="performance-message" class="performance-message"></div>
-                </div>
-                
-                <div class="review-section">
-                    <h3 class="review-title">Question Review</h3>
-                    <div id="review-container" class="review-container">
-                        <!-- Question reviews inserted by JS -->
-                    </div>
-                </div>
-                
-                <button id="restart-btn" class="btn btn-primary">
-                    Take Quiz Again
-                    <span class="btn-arrow">🔄</span>
-                </button>
-            </div>
+   <!-- Results Screen -->
+<div id="results-screen" class="screen">
+    <div class="results-background"></div>
+    
+    <div class="container">
+      <div class="results-content">
+        <div class="results-header">
+          <div class="trophy-icon">🏆</div>
+          <h1 class="results-title">Quiz Complete!</h1>
+          <p class="results-subtitle">Here's how you performed</p>
         </div>
+        
+        <div class="score-card">
+          <div class="final-score">
+            <div class="score-circle">
+              <span id="final-score" class="score-number">0</span>
+              <span class="score-total">/ 10</span>
+            </div>
+          </div>
+          
+          <div class="score-stats">
+            <div class="stat">
+              <div class="stat-icon correct">✓</div>
+              <div class="stat-info">
+                <span class="stat-label">Correct</span>
+                <span id="correct-count" class="stat-value">0</span>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat-icon incorrect">✗</div>
+              <div class="stat-info">
+                <span class="stat-label">Incorrect</span>
+                <span id="incorrect-count" class="stat-value">0</span>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat-icon percentage">%</div>
+              <div class="stat-info">
+                <span class="stat-label">Accuracy</span>
+                <span id="accuracy" class="stat-value">0%</span>
+              </div>
+            </div>
+          </div>
+          
+          <div id="performance-message" class="performance-message"></div>
+        </div>
+        
+        <div class="review-section">
+          <h3 class="review-title">Question Review</h3>
+          <div id="review-container" class="review-container">
+            <!-- Question reviews inserted by JS -->
+          </div>
+        </div>
+        
+        <button id="restart-btn" class="btn btn-primary">
+          Take Quiz Again
+          <span class="btn-arrow">🔄</span>
+        </button>
+      </div>
     </div>
+  </div>
+  
+  <!-- ✅ Scores / Leaderboard Screen (now a separate sibling) -->
+  <div id="scores-screen" class="screen">
+    <div class="results-background"></div> <!-- reuse background style -->
+  
+    <div class="container">
+      <div class="results-header">
+        <h1 class="results-title">Scores & Leaderboard</h1>
+        <p class="results-subtitle">
+          Track your progress and see how you rank against other players.
+        </p>
+      </div>
+  
+      <!-- Filters -->
+      <div class="scores-controls">
+        <div class="score-filter">
+          <label for="category-select">Category</label>
+          <select id="category-select">
+            <option value="">All categories</option>
+            <option value="random">Random trivia</option>
+            <!-- later: science, sports, etc. -->
+          </select>
+        </div>
+      </div>
+  
+      <div class="scores-layout">
+        <!-- My scores -->
+        <section class="scores-panel">
+          <h2 class="scores-panel-title">My Score History</h2>
+          <p class="scores-panel-subtitle">
+            Your most recent games (newest first).
+          </p>
+  
+          <div id="my-scores-empty" class="empty-state hidden">
+            You haven’t completed any quizzes yet. Play a game to see your stats here!
+          </div>
+  
+          <div class="table-wrapper">
+            <table class="scores-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Score</th>
+                  <th>Accuracy</th>
+                </tr>
+              </thead>
+              <tbody id="my-scores-body">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+  
+        <!-- Leaderboard -->
+        <section class="scores-panel">
+          <h2 class="scores-panel-title">Top 10 Leaderboard</h2>
+          <p class="scores-panel-subtitle">
+            Highest scores across all players for this category.
+          </p>
+  
+          <div id="leaderboard-empty" class="empty-state hidden">
+            No leaderboard entries yet for this category.
+          </div>
+  
+          <div class="table-wrapper">
+            <table class="scores-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Player</th>
+                  <th>Category</th>
+                  <th>Score</th>
+                  <th>Accuracy</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-body">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  
 
     <!-- Login Modal (front-end only) -->
     <!-- Login / Signup Modal -->

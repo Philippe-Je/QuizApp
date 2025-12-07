@@ -902,4 +902,129 @@
   .modal-switch strong {
     color: var(--secondary);
   }
-  
+
+  /* ========================= */
+/* Scores / Leaderboard UI   */
+/* ========================= */
+
+.scores-controls {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.score-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.score-filter select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+}
+
+.scores-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+}
+
+.scores-panel {
+  background: var(--white);
+  padding: 1.75rem 2rem;
+  border-radius: 20px;
+  box-shadow: 0 12px 35px var(--shadow);
+}
+
+.scores-panel-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.scores-panel-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 1rem;
+}
+
+.table-wrapper {
+  max-height: 350px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.scores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.scores-table th,
+.scores-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.scores-table th {
+  background: rgba(148, 163, 184, 0.08);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.scores-table tr:nth-child(even) td {
+  background: rgba(148, 163, 184, 0.03);
+}
+
+.empty-state {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+  margin-bottom: 1rem;
+}
+
+/* Mobile layout */
+@media (max-width: 900px) {
+  .scores-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.score-filter select {
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 2px solid rgba(131, 56, 236, 0.4); /* var(--secondary)-ish */
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  box-shadow: 0 6px 18px var(--shadow);
+  outline: none;
+  appearance: none;          /* remove default arrow (Chromium/WebKit) */
+  -webkit-appearance: none;  /* Safari */
+  -moz-appearance: none;     /* Firefox */
+  background-image: linear-gradient(
+      135deg,
+      rgba(131, 56, 236, 0.35),
+      rgba(255, 0, 110, 0.35)
+    ),
+    url("data:image/svg+xml;utf8,<svg fill='%238338ec' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat, no-repeat;
+  background-position: left, right 12px center;
+  background-size: 0 0, 18px 18px; /* first gradient is full, arrow is 18px */
+  padding-right: 2.3rem; /* space for arrow */
+}
+
+.score-filter select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 0, 110, 0.2);
+}

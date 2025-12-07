@@ -20,6 +20,8 @@ const NUM_QUESTIONS = 10;
 const homeScreen = document.getElementById("home-screen");
 const quizScreen = document.getElementById("quiz-screen");
 const resultsScreen = document.getElementById("results-screen");
+const scoresScreen = document.getElementById("scores-screen");
+const scoresToggleBtn = document.getElementById("scores-toggle");
 
 const startBtn = document.getElementById("start-btn");
 const nextBtn = document.getElementById("next-btn");
@@ -27,6 +29,11 @@ const restartBtn = document.getElementById("restart-btn");
 
 const timerValueEl = document.getElementById("timer-value");
 const timerBadge = document.querySelector(".timer-badge");
+const categorySelect = document.getElementById("category-select");
+const myScoresBody = document.getElementById("my-scores-body");
+const leaderboardBody = document.getElementById("leaderboard-body");
+const myScoresEmpty = document.getElementById("my-scores-empty");
+const leaderboardEmpty = document.getElementById("leaderboard-empty");
 
 // Login / theme elements
 const themeToggleBtn = document.getElementById("theme-toggle");
@@ -37,6 +44,7 @@ const loginForm = document.getElementById("login-form");
 const usernameInput = document.getElementById("username-input");
 const passwordInput = document.getElementById("password-input");
 const welcomeMessage = document.getElementById("welcome-message");
+const homeToggleBtn = document.getElementById("home-toggle");
 
 const modalTitle = document.getElementById("modal-title"); 
 const modalText = document.getElementById("modal-text");  
@@ -100,6 +108,7 @@ async function loadQuestions() {
   }
 }
 
+
 // Fisher–Yates shuffle
 function shuffleArray(arr) {
   const copy = [...arr];
@@ -115,8 +124,10 @@ function shuffleArray(arr) {
 // =========================
 
 function showHome() {
+  clearTimer(); // stop any active quiz timer
   resultsScreen.classList.remove("active");
   quizScreen.classList.remove("active");
+  scoresScreen.classList.remove("active");
   homeScreen.classList.add("active");
 }
 
@@ -124,6 +135,12 @@ function showQuiz() {
   homeScreen.classList.remove("active");
   resultsScreen.classList.remove("active");
   quizScreen.classList.add("active");
+}
+function showScoresScreen() {
+  homeScreen.classList.remove("active");
+  quizScreen.classList.remove("active");
+  resultsScreen.classList.remove("active");
+  scoresScreen.classList.add("active");
 }
 
 function showResultsScreen() {
@@ -138,6 +155,10 @@ function showResultsScreen() {
 startBtn.addEventListener("click", startQuiz);
 nextBtn.addEventListener("click", nextQuestion);
 restartBtn.addEventListener("click", restartQuiz);
+homeToggleBtn.addEventListener("click", () => {
+  showHome();
+});
+
 
 function startQuiz() {
   if (!questions || questions.length === 0) {
@@ -439,10 +460,13 @@ loginModal.addEventListener("click", (e) => {
 
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value; // don’t trim password
 
-  if (!username || !password) return;
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value; // don't trim password
+
+  if (!username || !password) {
+    return;
+  }
 
   const endpoint =
     authMode === "login" ? "/api/auth/login" : "/api/auth/signup";
@@ -469,14 +493,42 @@ loginForm.addEventListener("submit", async (e) => {
 
     const data = await res.json();
     // { token, user: { id, username, bestScore } }
+
     saveAuth(data);
     loadUserFromStorage();
     closeLoginModal();
+
+    // If the user is currently on the Scores screen, refresh it
+    if (scoresScreen.classList.contains("active")) {
+      loadScoresForCurrentCategory();
+    }
   } catch (err) {
     console.error("Auth error:", err);
     alert("Network error during authentication.");
   }
 });
+
+
+// Open Scores screen (requires login)
+scoresToggleBtn.addEventListener("click", () => {
+  const auth = getAuth();
+  if (!auth || !auth.token) {
+    // Not logged in – open login modal first
+    openLoginModal();
+    return;
+  }
+
+  showScoresScreen();
+  loadScoresForCurrentCategory();
+});
+
+// When category changes, reload data
+categorySelect.addEventListener("change", () => {
+  const auth = getAuth();
+  if (!auth || !auth.token) return;
+  loadScoresForCurrentCategory();
+});
+
 
 
 function openLoginModal() {
@@ -597,4 +649,145 @@ function applySavedTheme() {
 function updateThemeToggleLabel() {
   const isDark = document.body.classList.contains("dark-theme");
   themeToggleBtn.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+}
+// =========================
+// Scores / Leaderboard data
+// =========================
+
+async function loadScoresForCurrentCategory() {
+  const auth = getAuth();
+  if (!auth || !auth.token) return;
+
+  const category = categorySelect.value || "";
+
+  await Promise.all([
+    loadMyScores(auth.token, category),
+    loadLeaderboard(category),
+  ]);
+}
+
+async function loadMyScores(token, category) {
+  try {
+    let url = "/api/scores/me";
+    if (category) {
+      url += `?category=${encodeURIComponent(category)}`;
+    }
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.warn("Failed to fetch my scores");
+      myScoresBody.innerHTML = "";
+      myScoresEmpty.classList.remove("hidden");
+      myScoresEmpty.textContent = "Unable to load scores. Please try again later.";
+      return;
+    }
+
+    const data = await res.json(); // { scores: [...] }
+    renderMyScores(data.scores || []);
+  } catch (err) {
+    console.error("Error fetching my scores:", err);
+    myScoresBody.innerHTML = "";
+    myScoresEmpty.classList.remove("hidden");
+    myScoresEmpty.textContent = "Unable to load scores. Please try again later.";
+  }
+}
+
+async function loadLeaderboard(category) {
+  try {
+    let url = "/api/scores/leaderboard?limit=10";
+    if (category) {
+      url += `&category=${encodeURIComponent(category)}`;
+    }
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn("Failed to fetch leaderboard");
+      leaderboardBody.innerHTML = "";
+      leaderboardEmpty.classList.remove("hidden");
+      leaderboardEmpty.textContent =
+        "Unable to load leaderboard. Please try again later.";
+      return;
+    }
+
+    const data = await res.json(); // { scores: [...] }
+    renderLeaderboard(data.scores || []);
+  } catch (err) {
+    console.error("Error fetching leaderboard:", err);
+    leaderboardBody.innerHTML = "";
+    leaderboardEmpty.classList.remove("hidden");
+    leaderboardEmpty.textContent =
+      "Unable to load leaderboard. Please try again later.";
+  }
+}
+
+// Render helpers
+
+function renderMyScores(scores) {
+  myScoresBody.innerHTML = "";
+
+  if (!scores.length) {
+    myScoresEmpty.classList.remove("hidden");
+    return;
+  }
+
+  myScoresEmpty.classList.add("hidden");
+
+  scores.forEach((s) => {
+    const tr = document.createElement("tr");
+
+    const date = new Date(s.createdAt);
+    const formattedDate = date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const categoryLabel = s.category || "random";
+    const accuracyText = `${Math.round(s.accuracy)}%`;
+
+    tr.innerHTML = `
+      <td>${formattedDate}</td>
+      <td>${categoryLabel}</td>
+      <td>${s.score}/${s.totalQuestions}</td>
+      <td>${accuracyText}</td>
+    `;
+
+    myScoresBody.appendChild(tr);
+  });
+}
+
+function renderLeaderboard(scores) {
+  leaderboardBody.innerHTML = "";
+
+  if (!scores.length) {
+    leaderboardEmpty.classList.remove("hidden");
+    return;
+  }
+
+  leaderboardEmpty.classList.add("hidden");
+
+  scores.forEach((s, index) => {
+    const tr = document.createElement("tr");
+
+    const date = new Date(s.createdAt);
+    const accuracyText = `${Math.round(s.accuracy)}%`;
+    const categoryLabel = s.category || "random";
+    const username = s.user && s.user.username ? s.user.username : "Unknown";
+
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${username}</td>
+      <td>${categoryLabel}</td>
+      <td>${s.score}/${s.totalQuestions}</td>
+      <td>${accuracyText}</td>
+    `;
+
+    leaderboardBody.appendChild(tr);
+  });
 }
