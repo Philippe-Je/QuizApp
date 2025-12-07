@@ -28,14 +28,23 @@ const restartBtn = document.getElementById("restart-btn");
 const timerValueEl = document.getElementById("timer-value");
 const timerBadge = document.querySelector(".timer-badge");
 
-// Login / theme
+// Login / theme elements
 const themeToggleBtn = document.getElementById("theme-toggle");
 const loginToggleBtn = document.getElementById("login-toggle");
 const loginModal = document.getElementById("login-modal");
 const closeLoginBtn = document.getElementById("close-login");
 const loginForm = document.getElementById("login-form");
 const usernameInput = document.getElementById("username-input");
+const passwordInput = document.getElementById("password-input");
 const welcomeMessage = document.getElementById("welcome-message");
+
+const modalTitle = document.getElementById("modal-title"); 
+const modalText = document.getElementById("modal-text");  
+const authSubmitBtn = document.getElementById("auth-submit-btn"); 
+const authModeToggle = document.getElementById("auth-mode-toggle");
+
+let authMode = "login";
+
 
 // Disable Start until questions load
 startBtn.disabled = true;
@@ -52,20 +61,19 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================
-// Load questions.json
+// Load questions from /api/questions
 // =========================
 
 async function loadQuestions() {
   try {
     const response = await fetch("/api/questions");
     if (!response.ok) {
-      throw new Error("Failed to load questions.json");
+      throw new Error("Failed to load questions from server.");
     }
 
     const data = await response.json();
 
-    // Your JSON shape:
-    // { question, A, B, C, D, answer: "A" }
+    // Your JSON shape: { question, A, B, C, D, answer: "A" }
     const mapped = data.map((q) => {
       const letters = ["A", "B", "C", "D"];
       const answers = [q.A, q.B, q.C, q.D];
@@ -87,7 +95,7 @@ async function loadQuestions() {
     console.log(`Loaded ${questions.length} questions`);
   } catch (err) {
     console.error(err);
-    alert("Error loading questions.json. Check console for details.");
+    alert("Error loading questions from server. Check console.");
     startBtn.textContent = "Error loading questions";
   }
 }
@@ -103,7 +111,7 @@ function shuffleArray(arr) {
 }
 
 // =========================
-// Screen switching helpers
+// Screen helpers
 // =========================
 
 function showHome() {
@@ -151,10 +159,12 @@ function loadQuestion() {
 
   const q = questions[currentQuestion];
 
-  document.getElementById("current-question").textContent = currentQuestion + 1;
+  document.getElementById("current-question").textContent =
+    currentQuestion + 1;
   document.getElementById("question-num").textContent = currentQuestion + 1;
-  document.getElementById("score-display").querySelector("strong").textContent =
-    score;
+  document
+    .getElementById("score-display")
+    .querySelector("strong").textContent = score;
 
   const progressPercent = (currentQuestion / questions.length) * 100;
   document.getElementById("progress-fill").style.width =
@@ -165,7 +175,7 @@ function loadQuestion() {
   const answersContainer = document.getElementById("answers-container");
   answersContainer.innerHTML = "";
 
-  // Randomize answer order each time
+  // Randomize answer order per question
   const answersWithIndex = q.answers.map((text, idx) => ({
     text,
     originalIndex: idx,
@@ -186,12 +196,12 @@ function loadQuestion() {
   const feedback = document.getElementById("feedback");
   feedback.classList.add("hidden");
   feedback.classList.remove("correct", "incorrect");
-  document.querySelector(".feedback-icon").textContent = "";
-  document.querySelector(".feedback-text").textContent = "";
+  feedback.querySelector(".feedback-icon").textContent = "";
+  feedback.querySelector(".feedback-text").textContent = "";
 
   nextBtn.classList.add("hidden");
 
-  // Start timer
+  // Start timer for this question
   startTimer();
 }
 
@@ -224,7 +234,6 @@ function selectAnswer(selectedIndex) {
       .querySelector("strong").textContent = score;
   }
 
-  // Highlight correct / incorrect
   answerButtons.forEach((btn) => {
     const idx = parseInt(btn.dataset.originalIndex, 10);
     if (idx === q.correct) {
@@ -260,13 +269,15 @@ function nextQuestion() {
   }
 }
 
+// showResults now also sends score to backend (if logged in)
 function showResults() {
   clearTimer();
   showResultsScreen();
 
+  const totalQuestions = questions.length;
   const correctCount = score;
-  const incorrectCount = questions.length - score;
-  const accuracy = Math.round((score / questions.length) * 100);
+  const incorrectCount = totalQuestions - score;
+  const accuracy = Math.round((score / totalQuestions) * 100);
 
   document.getElementById("final-score").textContent = score;
   document.getElementById("correct-count").textContent = correctCount;
@@ -284,18 +295,18 @@ function showResults() {
     performanceMessage.textContent = "Don't give up! Try again!";
   }
 
-  // Save best score in localStorage if user is "logged in"
-  const userData = JSON.parse(localStorage.getItem("bq-user") || "null");
-  if (userData) {
-    const best = userData.bestScore || 0;
-    if (score > best) {
-      const updated = { ...userData, bestScore: score };
-      localStorage.setItem("bq-user", JSON.stringify(updated));
-      loadUserFromStorage(); // update message on next visit
-    }
+  // Fire-and-forget: submit score to backend if logged in
+  const auth = getAuth();
+  if (auth && auth.token) {
+    submitScoreToServer({
+      category: "random", // for now, local questions = random category
+      score,
+      totalQuestions,
+      accuracy,
+    });
   }
 
-  // Build review list
+  // Build review
   const reviewContainer = document.getElementById("review-container");
   reviewContainer.innerHTML = "";
 
@@ -304,7 +315,9 @@ function showResults() {
     item.className = `review-item ${ans.isCorrect ? "correct" : "incorrect"}`;
 
     item.innerHTML = `
-      <div class="review-question">Question ${index + 1}: ${ans.question}</div>
+      <div class="review-question">Question ${index + 1}: ${
+      ans.question
+    }</div>
       <div class="review-answer user">
         <span class="icon">${ans.isCorrect ? "✓" : "✗"}</span>
         Your answer: ${ans.userAnswer}
@@ -327,7 +340,7 @@ function restartQuiz() {
 }
 
 // =========================
-// Timer per question
+// Timer
 // =========================
 
 function startTimer() {
@@ -400,31 +413,71 @@ function handleTimeUp() {
 }
 
 // =========================
-// Login (front-end only)
+// Auth helpers (frontend)
+// =========================
+
+function getAuth() {
+  return JSON.parse(localStorage.getItem("bq-auth") || "null");
+}
+
+function saveAuth(authData) {
+  localStorage.setItem("bq-auth", JSON.stringify(authData));
+}
+
+// =========================
+// Login modal & backend auth
 // =========================
 
 loginToggleBtn.addEventListener("click", openLoginModal);
 closeLoginBtn.addEventListener("click", closeLoginModal);
+
 loginModal.addEventListener("click", (e) => {
-  if (e.target === loginModal.querySelector(".modal-backdrop")) {
+  if (e.target.classList.contains("modal-backdrop")) {
     closeLoginModal();
   }
 });
 
-loginForm.addEventListener("submit", (e) => {
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const name = usernameInput.value.trim();
-  if (!name) return;
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value; // don’t trim password
 
-  const existing = JSON.parse(localStorage.getItem("bq-user") || "null") || {};
-  const bestScore = existing.bestScore || 0;
+  if (!username || !password) return;
 
-  const userData = { name, bestScore };
-  localStorage.setItem("bq-user", JSON.stringify(userData));
+  const endpoint =
+    authMode === "login" ? "/api/auth/login" : "/api/auth/signup";
 
-  loadUserFromStorage();
-  closeLoginModal();
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      alert(
+        errData.error ||
+          `There was a problem trying to ${
+            authMode === "login" ? "log in" : "sign up"
+          }. Please try again.`
+      );
+      return;
+    }
+
+    const data = await res.json();
+    // { token, user: { id, username, bestScore } }
+    saveAuth(data);
+    loadUserFromStorage();
+    closeLoginModal();
+  } catch (err) {
+    console.error("Auth error:", err);
+    alert("Network error during authentication.");
+  }
 });
+
 
 function openLoginModal() {
   loginModal.classList.remove("hidden");
@@ -436,22 +489,95 @@ function closeLoginModal() {
 }
 
 function loadUserFromStorage() {
-  const stored = JSON.parse(localStorage.getItem("bq-user") || "null");
-  if (stored && stored.name) {
-    const best = stored.bestScore || 0;
+  const stored = getAuth();
+  if (stored && stored.user && stored.user.username) {
+    const best = stored.user.bestScore || 0;
     welcomeMessage.classList.remove("hidden");
     welcomeMessage.textContent =
       best > 0
-        ? `Welcome back, ${stored.name}! Your best score so far is ${best}/10.`
-        : `Welcome back, ${stored.name}! Ready to set a new high score?`;
+        ? `Welcome back, ${stored.user.username}! Your best score so far is ${best}/10.`
+        : `Welcome back, ${stored.user.username}! Ready to set a new high score?`;
+
+    loginToggleBtn.textContent = `👤 ${stored.user.username}`;
   } else {
     welcomeMessage.classList.add("hidden");
     welcomeMessage.textContent = "";
+    loginToggleBtn.textContent = "👤 Login";
+  }
+}
+
+authModeToggle.addEventListener("click", () => {
+  authMode = authMode === "login" ? "signup" : "login";
+  updateAuthModalMode();
+});
+
+function updateAuthModalMode() {
+  if (authMode === "login") {
+    modalTitle.textContent = "Log in to BrainQuest";
+    modalText.textContent = "Enter your username and password to continue.";
+    authSubmitBtn.textContent = "Log In";
+    authModeToggle.innerHTML =
+      `Don't have an account? <strong>Sign up</strong>`;
+  } else {
+    modalTitle.textContent = "Create your BrainQuest account";
+    modalText.textContent =
+      "Choose a username and password to start tracking your scores.";
+    authSubmitBtn.textContent = "Sign Up";
+    authModeToggle.innerHTML =
+      `Already have an account? <strong>Log in</strong>`;
+  }
+}
+
+function openLoginModal() {
+  loginModal.classList.remove("hidden");
+  updateAuthModalMode();
+  usernameInput.focus();
+}
+
+
+// =========================
+// Submit score to backend
+// =========================
+
+async function submitScoreToServer({ category, score, totalQuestions, accuracy }) {
+  try {
+    const auth = getAuth();
+    if (!auth || !auth.token) return;
+
+    const res = await fetch("/api/scores", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.token}`,
+      },
+      body: JSON.stringify({ category, score, totalQuestions, accuracy }),
+    });
+
+    if (!res.ok) {
+      console.warn("Failed to save score on server");
+      return;
+    }
+
+    const data = await res.json();
+    if (data.bestScore != null) {
+      // Update local bestScore copy
+      const updatedAuth = {
+        ...auth,
+        user: {
+          ...auth.user,
+          bestScore: data.bestScore,
+        },
+      };
+      saveAuth(updatedAuth);
+      loadUserFromStorage();
+    }
+  } catch (err) {
+    console.error("Error submitting score:", err);
   }
 }
 
 // =========================
-// Dark / Light theme toggle
+// Dark / Light theme
 // =========================
 
 themeToggleBtn.addEventListener("click", () => {

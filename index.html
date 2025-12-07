@@ -175,25 +175,45 @@
     </div>
 
     <!-- Login Modal (front-end only) -->
-    <div id="login-modal" class="modal hidden">
-        <div class="modal-backdrop"></div>
-        <div class="modal-card">
-            <button id="close-login" class="modal-close">&times;</button>
-            <h2 class="modal-title">Welcome to BrainQuest</h2>
-            <p class="modal-text">
-                Enter a display name so we can personalize your quiz
-                and track your best score on this device.
-            </p>
-            <form id="login-form" class="modal-form">
-                <label for="username-input">Display name</label>
-                <input id="username-input" type="text" required placeholder="e.g., Philippe" />
-                
-                <button type="submit" class="btn btn-primary modal-submit">
-                    Save &amp; Continue
-                </button>
-            </form>
-        </div>
+    <!-- Login / Signup Modal -->
+<div id="login-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <button id="close-login" class="modal-close">&times;</button>
+      <h2 id="modal-title" class="modal-title">Log in to BrainQuest</h2>
+      <p id="modal-text" class="modal-text">
+        Enter your username and password to continue.
+      </p>
+      <form id="login-form" class="modal-form">
+        <label for="username-input">Username</label>
+        <input
+          id="username-input"
+          type="text"
+          required
+          placeholder="e.g., philippe"
+        />
+  
+        <label for="password-input">Password</label>
+        <input
+          id="password-input"
+          type="password"
+          required
+          placeholder="••••••••"
+        />
+  
+        <button type="submit" id="auth-submit-btn" class="btn btn-primary modal-submit">
+          Log In
+        </button>
+      </form>
+  
+      <p class="modal-switch">
+        <span id="auth-mode-toggle">
+          Don't have an account? <strong>Sign up</strong>
+        </span>
+      </p>
     </div>
+  </div>
+  
 
     <script src="script.js"></script>
 </body>
