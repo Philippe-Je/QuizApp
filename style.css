@@ -902,6 +902,22 @@
   .modal-switch strong {
     color: var(--secondary);
   }
+  
+  /* ============================= */
+/* DARK THEME - dropdown styling */
+/* ============================= */
+
+.dark-theme .score-filter select {
+  background: rgba(0, 0, 0, 0.4);
+  color: #ffffff; /* ✨ bright text */
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.dark-theme .score-filter select option {
+  background: #1a1a1a; /* dark dropdown menu */
+  color: #ffffff;      /* readable text */
+}
+
 
   /* ========================= */
 /* Scores / Leaderboard UI   */
