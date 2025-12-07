@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadQuestions() {
   try {
-    const response = await fetch("questions.json");
+    const response = await fetch("/api/questions");
     if (!response.ok) {
       throw new Error("Failed to load questions.json");
     }
