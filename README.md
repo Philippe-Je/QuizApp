@@ -423,19 +423,19 @@ This project was developed as part of a solo project assignment.
 ## 📸 Screenshots
 
 ### Home Screen
-![Home Screen](https://via.placeholder.com/800x450.png?text=Home+Screen)
+![Home Screen](screenshots/home.png)
 
 ### Quiz Gameplay
-![Quiz Question](https://via.placeholder.com/800x450.png?text=Quiz+Question)
+![Quiz Question](screenshots/quiz.png)
 
 ### Results Screen
-![Results](https://via.placeholder.com/800x450.png?text=Results+Screen)
+![Results](screenshots/results.png)
 
 ### Leaderboard
-![Leaderboard](https://via.placeholder.com/800x450.png?text=Leaderboard)
+![Leaderboard](screenshots/Leaderboards.png)
 
 ### Dark Mode
-![Dark Mode](https://via.placeholder.com/800x450.png?text=Dark+Mode)
+![Dark Mode](screenshots/darkmode.png)
 
 ---
 
@@ -536,7 +536,7 @@ This project is licensed under the ISC License.
 For questions or feedback, please reach out:
 
 - **GitHub**: [Philippe-Je](https://github.com/Philippe-Je)
-- **Email**: your.email@example.com
+- **Email**: phil09492@gmail.com
 
 ---
 
