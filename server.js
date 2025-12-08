@@ -18,7 +18,7 @@ const MONGODB_URI =
 // ====== MIDDLEWARE ======
 app.use(express.json());
 
-// Serve static files (index.html, style.css, script.js, questions.json, etc.)
+// Serve static assets from project root
 app.use(express.static(path.join(__dirname)));
 
 // ====== HELPERS ======
@@ -41,7 +41,7 @@ app.get("/api/questions", async (req, res) => {
     type = "multiple",
   } = req.query;
 
-  // 1) Try Trivia API first
+  // 1) Try Open Trivia API
   if (source === "api") {
     try {
       const params = new URLSearchParams({
@@ -88,7 +88,7 @@ app.get("/api/questions", async (req, res) => {
         };
 
         const correctIndex = allAnswers.indexOf(correct);
-        obj.answer = letters[correctIndex]; // "A" | "B" | "C" | "D"
+        obj.answer = letters[correctIndex];
 
         return obj;
       });
@@ -96,7 +96,7 @@ app.get("/api/questions", async (req, res) => {
       return res.json(mapped);
     } catch (err) {
       console.error("Error fetching trivia API:", err.message);
-      // fall through to LOCAL fallback
+      // Fall through to local JSON
     }
   }
 
@@ -104,7 +104,7 @@ app.get("/api/questions", async (req, res) => {
   try {
     const filePath = path.join(__dirname, "questions.json");
     const raw = await fs.readFile(filePath, "utf8");
-    const data = JSON.parse(raw); // already { question, A, B, C, D, answer }
+    const data = JSON.parse(raw);
     res.json(data);
   } catch (err) {
     console.error("Error reading local questions.json:", err);
@@ -112,11 +112,11 @@ app.get("/api/questions", async (req, res) => {
   }
 });
 
-// ====== AUTH & SCORES API ======
+// ====== AUTH & SCORES ======
 app.use("/api/auth", authRoutes);
 app.use("/api/scores", scoreRoutes);
 
-// ====== FALLBACK: serve index.html for any other route (SPA) ======
+// ====== FALLBACK: send index.html for everything else ======
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
@@ -124,7 +124,7 @@ app.use((req, res) => {
 // ====== EXPORT FOR VERCEL ======
 module.exports = app;
 
-// ====== LOCAL DEV: connect to Mongo + listen ======
+// ====== LOCAL DEV ONLY ======
 if (require.main === module) {
   mongoose
     .connect(MONGODB_URI)
