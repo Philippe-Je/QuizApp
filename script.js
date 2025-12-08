@@ -545,12 +545,35 @@ function getAuth() {
 function saveAuth(authData) {
   localStorage.setItem("bq-auth", JSON.stringify(authData));
 }
+function logout() {
+  localStorage.removeItem("bq-auth");
+  loadUserFromStorage();
+
+  // If they were on the Scores screen, send them home
+  if (scoresScreen.classList.contains("active")) {
+    showHome();
+  }
+}
+
 
 // =========================
 // Login modal & backend auth
 // =========================
 
-loginToggleBtn.addEventListener("click", openLoginModal);
+loginToggleBtn.addEventListener("click", () => {
+  const auth = getAuth();
+  // Logged in → offer logout
+  if (auth && auth.user && auth.token) {
+    const ok = confirm(`Log out from QuizApp, ${auth.user.username}?`);
+    if (ok) {
+      logout();
+    }
+  } else {
+    // Not logged in → open modal
+    openLoginModal();
+  }
+});
+
 closeLoginBtn.addEventListener("click", closeLoginModal);
 
 loginModal.addEventListener("click", (e) => {
@@ -651,11 +674,11 @@ function loadUserFromStorage() {
         ? `Welcome back, ${stored.user.username}! Your best score so far is ${best}/10.`
         : `Welcome back, ${stored.user.username}! Ready to set a new high score?`;
 
-    loginToggleBtn.textContent = `👤 ${stored.user.username}`;
+        loginToggleBtn.textContent = ` ${stored.user.username} (Log out)`;
   } else {
     welcomeMessage.classList.add("hidden");
     welcomeMessage.textContent = "";
-    loginToggleBtn.textContent = "👤 Login";
+    loginToggleBtn.textContent = " Login";
   }
 }
 
