@@ -78,7 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initQuizSettings() {
-  // default = Random BrainQuest (local JSON)
   quizSource = "local";
   quizCategoryId = "";
   quizCategoryLabel = "Random trivia";
@@ -689,13 +688,13 @@ authModeToggle.addEventListener("click", () => {
 
 function updateAuthModalMode() {
   if (authMode === "login") {
-    modalTitle.textContent = "Log in to BrainQuest";
+    modalTitle.textContent = "Log in";
     modalText.textContent = "Enter your username and password to continue.";
     authSubmitBtn.textContent = "Log In";
     authModeToggle.innerHTML =
       `Don't have an account? <strong>Sign up</strong>`;
   } else {
-    modalTitle.textContent = "Create your BrainQuest account";
+    modalTitle.textContent = "Create your account";
     modalText.textContent =
       "Choose a username and password to start tracking your scores.";
     authSubmitBtn.textContent = "Sign Up";
