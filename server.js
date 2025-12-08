@@ -31,17 +31,17 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// ====== /api/questions (API + local fallback) ======
+// ====== /api/questions (Trivia API + local fallback) ======
 app.get("/api/questions", async (req, res) => {
   const {
     source = "api", // "api" or "local"
     amount = "10",
     category,
     difficulty,
-    type = "multiple", // for now
+    type = "multiple",
   } = req.query;
 
-  // 1) Try Trivia API
+  // 1) Try Trivia API first
   if (source === "api") {
     try {
       const params = new URLSearchParams({
@@ -88,7 +88,7 @@ app.get("/api/questions", async (req, res) => {
         };
 
         const correctIndex = allAnswers.indexOf(correct);
-        obj.answer = letters[correctIndex]; // "A"/"B"/"C"/"D"
+        obj.answer = letters[correctIndex]; // "A" | "B" | "C" | "D"
 
         return obj;
       });
@@ -116,15 +116,15 @@ app.get("/api/questions", async (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/scores", scoreRoutes);
 
-// ====== FALLBACK: for SPA routes (local dev mainly) ======
-app.get("/*", (req, res) => {
+// ====== FALLBACK: serve index.html for any other route (SPA) ======
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // ====== EXPORT FOR VERCEL ======
 module.exports = app;
 
-// ====== LOCAL DEV: connect Mongo + listen ======
+// ====== LOCAL DEV: connect to Mongo + listen ======
 if (require.main === module) {
   mongoose
     .connect(MONGODB_URI)

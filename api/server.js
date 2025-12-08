@@ -19,7 +19,7 @@ async function connectToDatabase() {
 module.exports = async (req, res) => {
   try {
     await connectToDatabase();
-    return app(req, res); // hand off to Express app
+    return app(req, res); // delegate to Express
   } catch (err) {
     console.error("Serverless error:", err);
     res.status(500).json({ error: "Internal server error" });
