@@ -4,22 +4,24 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs").promises;
 const mongoose = require("mongoose");
+
 const authRoutes = require("./routes/auth");
 const scoreRoutes = require("./routes/scores");
 
 const app = express();
-app.use(express.static(path.join(__dirname)));
 
+// ====== CONFIG ======
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/quizapp";
 
-// Parse JSON bodies
+// ====== MIDDLEWARE ======
 app.use(express.json());
 
-// Serve static files (index.html, style.css, script.js, questions.json)
-app.use(express.static(__dirname));
+// Serve static files (index.html, style.css, script.js, questions.json, etc.)
+app.use(express.static(path.join(__dirname)));
 
+// ====== HELPERS ======
 function shuffleArray(arr) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -29,29 +31,23 @@ function shuffleArray(arr) {
   return copy;
 }
 
-
-// ---------- API: Questions from local JSON ----------
-// GET /api/questions
-// By default tries Open Trivia DB; falls back to local questions.json if API fails.
-// Optional query params: source=api|local, amount, category, difficulty, type
+// ====== /api/questions (API + local fallback) ======
 app.get("/api/questions", async (req, res) => {
   const {
-    source = "api",        // "api" or "local"
+    source = "api", // "api" or "local"
     amount = "10",
     category,
     difficulty,
-    type = "multiple",     // we’ll use multiple-choice for now
+    type = "multiple", // for now
   } = req.query;
 
-  // ================
-  // 1) API MODE
-  // ================
+  // 1) Try Trivia API
   if (source === "api") {
     try {
       const params = new URLSearchParams({
         amount: String(amount || 10),
-        type,                      // "multiple" by default
-        encode: "url3986",         // easier to decode
+        type,
+        encode: "url3986",
       });
 
       if (category) params.append("category", category);
@@ -64,25 +60,22 @@ app.get("/api/questions", async (req, res) => {
       const apiData = await response.json();
 
       if (apiData.response_code !== 0) {
-        console.warn("Trivia API returned response_code:", apiData.response_code);
-        // fall through to local questions below
+        console.warn(
+          "Trivia API returned response_code:",
+          apiData.response_code
+        );
         throw new Error("Trivia API error code " + apiData.response_code);
       }
 
       const letters = ["A", "B", "C", "D"];
 
-      // Map API results → SAME shape as your local JSON:
-      // { question, A, B, C, D, answer: "A"|"B"|"C"|"D" }
       const mapped = apiData.results.map((q) => {
-        // Decode URL-encoded text
         const questionText = decodeURIComponent(q.question);
         const correct = decodeURIComponent(q.correct_answer);
         const incorrects = q.incorrect_answers.map((a) =>
           decodeURIComponent(a)
         );
 
-        // For multiple-choice we have 1 correct + 3 incorrect = 4 answers
-        // Put them all in one array, then shuffle
         const allAnswers = shuffleArray([correct, ...incorrects]);
 
         const obj = {
@@ -91,10 +84,9 @@ app.get("/api/questions", async (req, res) => {
           B: allAnswers[1],
           C: allAnswers[2],
           D: allAnswers[3],
-          answer: "", // will be set below
+          answer: "",
         };
 
-        // Find which letter is the correct one
         const correctIndex = allAnswers.indexOf(correct);
         obj.answer = letters[correctIndex]; // "A"/"B"/"C"/"D"
 
@@ -104,17 +96,15 @@ app.get("/api/questions", async (req, res) => {
       return res.json(mapped);
     } catch (err) {
       console.error("Error fetching trivia API:", err.message);
-      // if API failed, we continue to LOCAL fallback below
+      // fall through to LOCAL fallback
     }
   }
 
-  // ================
-  // 2) LOCAL FALLBACK
-  // ================
+  // 2) Local questions.json fallback
   try {
     const filePath = path.join(__dirname, "questions.json");
-    const raw = await fs.promises.readFile(filePath, "utf8");
-    const data = JSON.parse(raw); // already in { question, A, B, C, D, answer } shape
+    const raw = await fs.readFile(filePath, "utf8");
+    const data = JSON.parse(raw); // already { question, A, B, C, D, answer }
     res.json(data);
   } catch (err) {
     console.error("Error reading local questions.json:", err);
@@ -122,27 +112,30 @@ app.get("/api/questions", async (req, res) => {
   }
 });
 
-
-// ---------- API: Auth & Scores ----------
+// ====== AUTH & SCORES API ======
 app.use("/api/auth", authRoutes);
 app.use("/api/scores", scoreRoutes);
 
-// Fallback: send index.html for root
-// Fallback: serve index.html for any unknown route (so / just works)
-app.get("*", (req, res) => {
+// ====== FALLBACK: for SPA routes (local dev mainly) ======
+app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// ====== EXPORT FOR VERCEL ======
+module.exports = app;
 
-// ---------- Connect to MongoDB & start server ----------
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`Quiz server running at http://localhost:${PORT}`);
+// ====== LOCAL DEV: connect Mongo + listen ======
+if (require.main === module) {
+  mongoose
+    .connect(MONGODB_URI)
+    .then(() => {
+      console.log("Connected to MongoDB");
+      app.listen(PORT, () => {
+        console.log(`Quiz server running at http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Mongo connection error:", err);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error("Mongo connection error:", err);
-  });
+}
