@@ -425,9 +425,6 @@ This project was developed as part of a solo project assignment.
 ### Home Screen
 ![Home Screen](https://via.placeholder.com/800x450.png?text=Home+Screen)
 
-### Quiz Mode Selection
-![Quiz Settings](https://via.placeholder.com/800x450.png?text=Quiz+Settings)
-
 ### Quiz Gameplay
 ![Quiz Question](https://via.placeholder.com/800x450.png?text=Quiz+Question)
 
