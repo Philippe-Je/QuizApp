@@ -8,6 +8,7 @@ const authRoutes = require("./routes/auth");
 const scoreRoutes = require("./routes/scores");
 
 const app = express();
+app.use(express.static(path.join(__dirname)));
 
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI =
@@ -127,13 +128,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/scores", scoreRoutes);
 
 // Fallback: send index.html for root
-app.get("/", (req, res) => {
+// Fallback: serve index.html for any unknown route (so / just works)
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+
 // ---------- Connect to MongoDB & start server ----------
 mongoose
-  .connect(MONGODB_URI)
+  .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => {
@@ -141,6 +144,5 @@ mongoose
     });
   })
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
+    console.error("Mongo connection error:", err);
   });
