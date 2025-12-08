@@ -7,6 +7,12 @@ let currentQuestion = 0;
 let score = 0;
 let userAnswers = [];
 
+// Quiz configuration (mode + API settings)
+let quizSource = "local";      // "local" (questions.json) or "api"
+let quizCategoryId = "";       // OpenTDB category id, e.g. "21" for Sports
+let quizCategoryLabel = "Random trivia";  // human readable
+let quizDifficulty = "";       // "easy" | "medium" | "hard" | ""
+
 let timerId = null;
 let timeLeft = 20;
 let hasAnsweredCurrent = false;
@@ -35,6 +41,14 @@ const leaderboardBody = document.getElementById("leaderboard-body");
 const myScoresEmpty = document.getElementById("my-scores-empty");
 const leaderboardEmpty = document.getElementById("leaderboard-empty");
 
+// Home-screen quiz settings
+const modeRandomBtn = document.getElementById("mode-random");
+const modeSubjectBtn = document.getElementById("mode-subject");
+const playCategorySelect = document.getElementById("play-category-select");
+const playDifficultySelect = document.getElementById("play-difficulty-select");
+const subjectSettingsRow = document.getElementById("subject-settings");
+
+
 // Login / theme elements
 const themeToggleBtn = document.getElementById("theme-toggle");
 const loginToggleBtn = document.getElementById("login-toggle");
@@ -53,11 +67,6 @@ const authModeToggle = document.getElementById("auth-mode-toggle");
 
 let authMode = "login";
 
-
-// Disable Start until questions load
-startBtn.disabled = true;
-startBtn.textContent = "Loading questions...";
-
 // =========================
 // Init
 // =========================
@@ -65,49 +74,119 @@ startBtn.textContent = "Loading questions...";
 document.addEventListener("DOMContentLoaded", () => {
   applySavedTheme();
   loadUserFromStorage();
-  loadQuestions();
+  initQuizSettings();
 });
+
+function initQuizSettings() {
+  // default = Random BrainQuest (local JSON)
+  quizSource = "local";
+  quizCategoryId = "";
+  quizCategoryLabel = "Random trivia";
+  quizDifficulty = "";
+
+  if (modeRandomBtn && modeSubjectBtn) {
+    modeRandomBtn.classList.add("active");
+    modeSubjectBtn.classList.remove("active");
+  }
+
+  if (subjectSettingsRow) {
+    subjectSettingsRow.style.display = "none"; // hidden in random mode
+  }
+
+  if (playCategorySelect) playCategorySelect.value = "";
+  if (playDifficultySelect) playDifficultySelect.value = "";
+}
 
 // =========================
 // Load questions from /api/questions
 // =========================
+// ====== Mode toggle (Random vs Subject) ======
 
-async function loadQuestions() {
-  try {
-    const response = await fetch("/api/questions");
-    if (!response.ok) {
-      throw new Error("Failed to load questions from server.");
+if (modeRandomBtn) {
+  modeRandomBtn.addEventListener("click", () => {
+    quizSource = "local";
+    quizCategoryId = "";
+    quizCategoryLabel = "Random trivia";
+    quizDifficulty = "";
+
+    modeRandomBtn.classList.add("active");
+    modeSubjectBtn.classList.remove("active");
+
+    if (subjectSettingsRow) {
+      subjectSettingsRow.style.display = "none";
     }
-
-    const data = await response.json();
-
-    // Your JSON shape: { question, A, B, C, D, answer: "A" }
-    const mapped = data.map((q) => {
-      const letters = ["A", "B", "C", "D"];
-      const answers = [q.A, q.B, q.C, q.D];
-      const correctIndex = letters.indexOf(q.answer);
-
-      return {
-        question: q.question,
-        answers,
-        correct: correctIndex,
-      };
-    });
-
-    // Randomize question order
-    questions = shuffleArray(mapped).slice(0, NUM_QUESTIONS);
-
-    startBtn.disabled = false;
-    startBtn.textContent = "Start Quiz Now";
-
-    console.log(`Loaded ${questions.length} questions`);
-  } catch (err) {
-    console.error(err);
-    alert("Error loading questions from server. Check console.");
-    startBtn.textContent = "Error loading questions";
-  }
+  });
 }
 
+if (modeSubjectBtn) {
+  modeSubjectBtn.addEventListener("click", () => {
+    quizSource = "api";
+
+    modeSubjectBtn.classList.add("active");
+    modeRandomBtn.classList.remove("active");
+
+    if (subjectSettingsRow) {
+      subjectSettingsRow.style.display = "flex";
+    }
+  });
+}
+
+// When user picks category/difficulty in Subject Mode
+if (playCategorySelect) {
+  playCategorySelect.addEventListener("change", () => {
+    quizCategoryId = playCategorySelect.value; // may be ""
+    const opt =
+      playCategorySelect.options[playCategorySelect.selectedIndex];
+    quizCategoryLabel = opt ? opt.textContent : "Any Category";
+  });
+}
+
+if (playDifficultySelect) {
+  playDifficultySelect.addEventListener("change", () => {
+    quizDifficulty = playDifficultySelect.value; // "", "easy", "medium", "hard"
+  });
+}
+
+// Load questions based on current quiz settings (mode, category, difficulty)
+async function loadQuestionsForCurrentSettings() {
+  const params = new URLSearchParams();
+
+  // always send amount = NUM_QUESTIONS
+  params.set("amount", NUM_QUESTIONS.toString());
+
+  if (quizSource === "api") {
+    params.set("source", "api");
+    params.set("type", "multiple");
+    if (quizCategoryId) params.set("category", quizCategoryId);
+    if (quizDifficulty) params.set("difficulty", quizDifficulty);
+  } else {
+    // local random mode uses your questions.json on the backend
+    params.set("source", "local");
+  }
+
+  const response = await fetch(`/api/questions?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to load questions from server.");
+  }
+
+  const data = await response.json();
+
+  // Backend returns: { question, A, B, C, D, answer: "A"|"B"|"C"|"D" }
+  const mapped = data.map((q) => {
+    const letters = ["A", "B", "C", "D"];
+    const answers = [q.A, q.B, q.C, q.D];
+    const correctIndex = letters.indexOf(q.answer);
+
+    return {
+      question: q.question,
+      answers,
+      correct: correctIndex,
+    };
+  });
+
+  // Randomize on client for extra variety
+  questions = shuffleArray(mapped);
+}
 
 // Fisher–Yates shuffle
 function shuffleArray(arr) {
@@ -160,9 +239,19 @@ homeToggleBtn.addEventListener("click", () => {
 });
 
 
-function startQuiz() {
-  if (!questions || questions.length === 0) {
-    alert("Questions are still loading. Please wait a moment.");
+async function startQuiz() {
+  // give user feedback while fetching
+  const originalLabel = startBtn.textContent;
+  startBtn.disabled = true;
+  startBtn.textContent = "Loading questions...";
+
+  try {
+    await loadQuestionsForCurrentSettings();
+  } catch (err) {
+    console.error(err);
+    alert("There was a problem loading questions. Please try again.");
+    startBtn.disabled = false;
+    startBtn.textContent = originalLabel;
     return;
   }
 
@@ -172,7 +261,12 @@ function startQuiz() {
 
   showQuiz();
   loadQuestion();
+
+  // re-enable for next time they go back to Home
+  startBtn.disabled = false;
+  startBtn.textContent = originalLabel;
 }
+
 
 function loadQuestion() {
   clearTimer();
@@ -319,12 +413,19 @@ function showResults() {
   // Fire-and-forget: submit score to backend if logged in
   const auth = getAuth();
   if (auth && auth.token) {
-    submitScoreToServer({
-      category: "random", // for now, local questions = random category
-      score,
-      totalQuestions,
-      accuracy,
-    });
+    // Decide what category name to store with this score
+const categoryForScore =
+quizSource === "local"
+  ? "random" // keep lowercase so existing scoreboard filter still works
+  : quizCategoryLabel || "Any Category";
+
+submitScoreToServer({
+category: categoryForScore,
+score,
+totalQuestions,
+accuracy,
+});
+
   }
 
   // Build review

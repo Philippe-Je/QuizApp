@@ -1044,3 +1044,137 @@
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(255, 0, 110, 0.2);
 }
+/* ===== Quiz settings (Home screen) ===== */
+
+.quiz-settings {
+  margin: 2rem auto 3rem;
+  max-width: 800px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.dark-theme .quiz-settings {
+  background: rgba(15, 16, 30, 0.95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.settings-header {
+  margin-bottom: 0.75rem;
+}
+
+.settings-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-light);
+}
+
+/* Mode toggle buttons */
+
+.mode-toggle {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.mode-btn {
+  flex: 1 1 180px;
+  border-radius: 999px;
+  border: 2px solid rgba(131, 56, 236, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px var(--shadow);
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--white);
+  border-color: transparent;
+  box-shadow: 0 10px 30px rgba(131, 56, 236, 0.5);
+}
+
+/* Subject settings row */
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.settings-field {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.settings-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+}
+
+/* Reuse nice-pill select style (similar to scores filter) */
+
+.settings-field select {
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 2px solid rgba(131, 56, 236, 0.4);
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text);
+  box-shadow: 0 6px 18px var(--shadow);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%238338ec' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px 18px;
+  padding-right: 2.4rem;
+}
+
+.settings-field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 0, 110, 0.15);
+}
+
+/* Dark theme for the new selects */
+
+.dark-theme .settings-field select {
+  background: rgba(10, 11, 25, 0.95);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.dark-theme .settings-field select option {
+  background: #101122;
+  color: #ffffff;
+}
+
+/* Mobile tweaks */
+
+@media (max-width: 768px) {
+  .settings-row {
+    flex-direction: column;
+  }
+}
